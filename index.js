@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.use('/api/auth', require('./Routes/Auth'));
+app.use('/api/auth', require('./routes/auth'));
 
 // Start the server
 app.listen(port, () => {
