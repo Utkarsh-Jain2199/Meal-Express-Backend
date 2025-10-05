@@ -9,7 +9,11 @@ const UserSchema = new Schema({
     },
     location:{
         type:String,
-        required:true,
+        required:false,
+    },
+    mobile:{
+        type:String,
+        required:false,
     },
     email:{
         type:String,
