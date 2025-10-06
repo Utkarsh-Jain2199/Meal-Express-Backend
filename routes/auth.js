@@ -338,10 +338,16 @@ const razorpay = new Razorpay({
 
 router.post('/create-order', fetch, async (req, res) => {
     try {
-        const { amount } = req.body;
+        const { cartItems, deliveryAddress, orderName, orderMobile } = req.body;
+        
+        // Calculate total amount from cart items (server-side validation)
+        let totalAmount = 0;
+        cartItems.forEach(item => {
+            totalAmount += item.price * item.qty;
+        });
         
         const options = {
-            amount: amount * 100,
+            amount: totalAmount * 100, // Convert to paise
             currency: 'INR',
             receipt: 'receipt_' + Date.now()
         };
@@ -356,7 +362,7 @@ router.post('/create-order', fetch, async (req, res) => {
 
 router.post('/verify-payment', fetch, async (req, res) => {
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, cartItems, deliveryAddress, orderName, orderMobile } = req.body;
         
         const sign = razorpay_order_id + '|' + razorpay_payment_id;
         const expectedSign = crypto
@@ -365,7 +371,29 @@ router.post('/verify-payment', fetch, async (req, res) => {
             .digest('hex');
 
         if (razorpay_signature === expectedSign) {
-            res.json({ success: true, message: 'Payment verified successfully' });
+            // Calculate total amount from cart items (server-side validation)
+            let totalAmount = 0;
+            cartItems.forEach(item => {
+                totalAmount += item.price * item.qty;
+            });
+            
+            // Save order data
+            const orderData = {
+                order_date: new Date().toLocaleDateString(),
+                order_name: orderName,
+                order_mobile: orderMobile,
+                delivery_address: deliveryAddress,
+                total_amount: totalAmount,
+                payment_id: razorpay_payment_id,
+                order_id: razorpay_order_id,
+                items: cartItems
+            };
+            
+            res.json({ 
+                success: true, 
+                message: 'Payment verified successfully',
+                orderData: orderData
+            });
         } else {
             res.status(400).json({ success: false, error: 'Invalid signature' });
         }
