@@ -338,16 +338,24 @@ const razorpay = new Razorpay({
 
 router.post('/create-order', fetch, async (req, res) => {
     try {
-        const { cartItems, deliveryAddress, orderName, orderMobile } = req.body;
+        const { cartItems } = req.body;
         
-        // Calculate total amount from cart items (server-side validation)
+        if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Cart items are required' 
+            });
+        }
+        
         let totalAmount = 0;
         cartItems.forEach(item => {
-            totalAmount += item.price * item.qty;
+            if (item && item.price && item.qty) {
+                totalAmount += item.price * item.qty;
+            }
         });
         
         const options = {
-            amount: totalAmount * 100, // Convert to paise
+            amount: totalAmount * 100,
             currency: 'INR',
             receipt: 'receipt_' + Date.now()
         };
@@ -355,7 +363,6 @@ router.post('/create-order', fetch, async (req, res) => {
         const order = await razorpay.orders.create(options);
         res.json({ success: true, order });
     } catch (error) {
-        console.error('Error creating Razorpay order:', error);
         res.status(500).json({ success: false, error: 'Failed to create payment order' });
     }
 });
@@ -371,13 +378,20 @@ router.post('/verify-payment', fetch, async (req, res) => {
             .digest('hex');
 
         if (razorpay_signature === expectedSign) {
-            // Calculate total amount from cart items (server-side validation)
+            if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Cart items are required for payment verification' 
+                });
+            }
+            
             let totalAmount = 0;
             cartItems.forEach(item => {
-                totalAmount += item.price * item.qty;
+                if (item && item.price && item.qty) {
+                    totalAmount += item.price * item.qty;
+                }
             });
             
-            // Save order data
             const orderData = {
                 order_date: new Date().toLocaleDateString(),
                 order_name: orderName,
@@ -398,7 +412,6 @@ router.post('/verify-payment', fetch, async (req, res) => {
             res.status(400).json({ success: false, error: 'Invalid signature' });
         }
     } catch (error) {
-        console.error('Error verifying payment:', error);
         res.status(500).json({ success: false, error: 'Payment verification failed' });
     }
 });
