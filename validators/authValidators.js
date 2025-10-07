@@ -12,9 +12,21 @@ const loginValidation = [
 ];
 
 const updateUserValidation = [
-    body('name').isLength({ min: 3 }),
+    body('name').isLength({ min: 3 }).withMessage('Name must be at least 3 characters'),
     body('location').optional(),
-    body('mobile').optional()
+    body('mobile')
+        .optional()
+        .custom((value) => {
+            if (value && value.trim() !== '') {
+                if (!/^\d+$/.test(value)) {
+                    throw new Error('Mobile number must contain only numbers');
+                }
+                if (value.length !== 10) {
+                    throw new Error('Mobile number must be exactly 10 digits');
+                }
+            }
+            return true;
+        })
 ];
 
 module.exports = {
@@ -22,4 +34,3 @@ module.exports = {
     loginValidation,
     updateUserValidation
 };
-
