@@ -174,13 +174,26 @@ const updateUser = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         console.log("Validation errors:", errors.array());
-        return res.status(400).json({ success, errors: errors.array(), error: "Validation failed" });
+        return res.status(400).json({ 
+            success, 
+            errors: errors.array(), 
+            error: errors.array()[0].msg || "Validation failed" 
+        });
     }
 
     try {
         const userId = req.user.id;
         const { name, location, mobile } = req.body;
-
+        
+        if (mobile && mobile.trim() !== '') {
+            if (!/^\d{10}$/.test(mobile.trim())) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: "Mobile number must be exactly 10 digits and contain only numbers" 
+                });
+            }
+        }
+        
         console.log("Updating user:", userId);
         console.log("New name:", name);
         console.log("New location:", location);
@@ -212,5 +225,3 @@ const updateUser = async (req, res) => {
 };
 
 module.exports = { testServer, createUser, loginUser, googleAuth, getUser, updateUser };
-
-
