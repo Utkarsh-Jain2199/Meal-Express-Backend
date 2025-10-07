@@ -56,6 +56,27 @@ const verifyPayment = async (req, res) => {
                 });
             }
             
+            if (!orderName || orderName.trim() === '') {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Order name is required' 
+                });
+            }
+            
+            if (!orderMobile || orderMobile.trim() === '') {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Mobile number is required' 
+                });
+            }
+            
+            if (!/^\d{10}$/.test(orderMobile.trim())) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Mobile number must be exactly 10 digits and contain only numbers' 
+                });
+            }
+            
             let totalAmount = 0;
             cartItems.forEach(item => {
                 if (item && item.price && item.qty) {
@@ -96,4 +117,3 @@ module.exports = {
     verifyPayment,
     getRazorpayKey
 };
-
